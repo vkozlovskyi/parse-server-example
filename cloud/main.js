@@ -14,7 +14,7 @@ Parse.Cloud.define("unread_counts", function(request, response) {
 
     query = new Parse.Query('Message');
     query.equalTo('unreadUserIds', currentUser.id);
-    promises.push(query.find({ sessionToken: token, useMasterKey: true}));
+    promises.push(query.find({ sessionToken: token, useMasterKey: true }));
 
     query = new Parse.Query('Notification');
     query.equalTo('owner', currentUser);
@@ -41,28 +41,28 @@ Parse.Cloud.define("unread_counts", function(request, response) {
     });
 });
 
-// Parse.Cloud.define("mark_notification_read", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var notificationId = request.params.notificationId;
-//     if (!notificationId) {
-//         response.error('notificationId must be supplied');
-//     } else {
-//         var query = new Parse.Query('Notification');
-//         query.get(notificationId).then(function(notification) {
-//             if (notification.get('read') === true) {
-//                 return Parse.Promise.error("Notification already marked as read");
-//             }
-//             notification.set('read', true);
-//             return notification.save();
-//         }).then(function(user) {
-//             response.success(user);
-//         }, function(error) {
-//             response.error('Error marking notification read');
-//             console.log('Error marking notification read: ' + JSON.stringify(error));
-//         });
-//     }
-// });
-//
+Parse.Cloud.define("mark_notification_read", function(request, response) {
+    Parse.Cloud.useMasterKey();
+    var notificationId = request.params.notificationId;
+    if (!notificationId) {
+        response.error('notificationId must be supplied');
+    } else {
+        var query = new Parse.Query('Notification');
+        query.get(notificationId).then(function(notification) {
+            if (notification.get('read') === true) {
+                return Parse.Promise.error("Notification already marked as read");
+            }
+            notification.set('read', true);
+            return notification.save();
+        }).then(function(user) {
+            response.success(user);
+        }, function(error) {
+            response.error('Error marking notification read');
+            console.log('Error marking notification read: ' + JSON.stringify(error));
+        });
+    }
+});
+
 // Parse.Cloud.beforeSave("Conversation", function(request, response) {
 //     Parse.Cloud.useMasterKey();
 //     var conversation = request.object;
