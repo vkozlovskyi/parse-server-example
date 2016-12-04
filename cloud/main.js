@@ -218,6 +218,7 @@ Parse.Cloud.define("like", function(request, response) {
 Parse.Cloud.define("unlike", function(request, response) {
     // Parse.Cloud.useMasterKey();
     var activityId = request.params.activityId;
+    var currentUser = request.user;
     if (!activityId) {
         response.error('activityId must be supplied');
     } else {
