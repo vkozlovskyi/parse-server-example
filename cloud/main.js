@@ -100,9 +100,7 @@ Parse.Cloud.define("mark_messages_read", function(request, response) {
             message.id = messageId;
             return message;
         });
-        console.log('Before fetch');
         Parse.Object.fetchAll(messages, { useMasterKey: true }).then(function(messages) {
-            console.log('Messages fetched');
             _.each(messages, function(message) {
                 var unreadUserIds = message.get('unreadUserIds');
                 var newIds = _.filter(unreadUserIds, function(userId) {
@@ -110,7 +108,6 @@ Parse.Cloud.define("mark_messages_read", function(request, response) {
                 });
                 message.set('unreadUserIds', newIds);
             });
-            console.log('Saving');
             return Parse.Object.saveAll(messages, { useMasterKey: true });
         }).then(function(user) {
             response.success(user);
@@ -491,42 +488,43 @@ Parse.Cloud.define("activities", function(request, response) {
     }
 });
 
-// Parse.Cloud.define("linkedin_distance", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var token = request.params.liToken;
-//     var userId = request.params.userId;
-//     var query = new Parse.Query(Parse.User);
-//     query.get(userId).then(function(user) {
-//         var li_uid = user.get('li_uid');
-//         return Parse.Cloud.httpRequest({
-//             url: 'https://api.linkedin.com/v1/people::(~,id='+li_uid+'):(relation-to-viewer:(distance))',
-//             params: {
-//                 'oauth2_access_token' : token
-//             },
-//             headers:{
-//                 'Content-Type': 'application/json',
-//                 'x-li-format': 'json'
-//         }}).then(function(distanceResponse) {
-//             var responseVals = distanceResponse.data.values;
-//             var distance = -1;
-//             _.each(responseVals, function(value) {
-//                 var key = value['_key'];
-//                 if (key === 'id='+li_uid) {
-//                     try {
-//                         distance = value['relationToViewer']['distance'];
-//                     } catch(err) {}
-//                 }
-//             });
-//             return Parse.Promise.as(distance);
-//         });
-//     }).then(function(distance) {
-//         response.success({
-//             distance: distance
-//         });
-//     }, function(error) {
-//         response.error(error);
-//     });
-// });
+Parse.Cloud.define("linkedin_distance", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var token = request.params.liToken;
+    var userId = request.params.userId;
+    var query = new Parse.Query(Parse.User);
+    query.get(userId, { useMasterKey: true }).then(function(user) {
+        var li_uid = user.get('li_uid');
+        return Parse.Cloud.httpRequest({
+            url: 'https://api.linkedin.com/v1/people::(~,id='+li_uid+'):(relation-to-viewer:(distance))',
+            params: {
+                'oauth2_access_token' : token
+            },
+            headers:{
+                'Content-Type': 'application/json',
+                'x-li-format': 'json'
+        }}).then(function(distanceResponse) {
+            console.log('Distance Response: ' + JSON.stringify(distanceResponse));
+            var responseVals = distanceResponse.data.values;
+            var distance = -1;
+            _.each(responseVals, function(value) {
+                var key = value['_key'];
+                if (key === 'id='+li_uid) {
+                    try {
+                        distance = value['relationToViewer']['distance'];
+                    } catch(err) {}
+                }
+            });
+            return Parse.Promise.as(distance);
+        });
+    }).then(function(distance) {
+        response.success({
+            distance: distance
+        });
+    }, function(error) {
+        response.error(error);
+    });
+});
 
 Parse.Cloud.define("auth_linkedin", function(request, response) {
     var fields = [
