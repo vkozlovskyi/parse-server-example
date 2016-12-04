@@ -100,7 +100,9 @@ Parse.Cloud.define("mark_messages_read", function(request, response) {
             message.id = messageId;
             return message;
         });
+        console.log('Before fetch');
         Parse.Object.fetchAll(messages, { useMasterKey: true }).then(function(messages) {
+            console.log('Messages fetched');
             _.each(messages, function(message) {
                 var unreadUserIds = message.get('unreadUserIds');
                 var newIds = _.filter(unreadUserIds, function(userId) {
@@ -108,6 +110,7 @@ Parse.Cloud.define("mark_messages_read", function(request, response) {
                 });
                 message.set('unreadUserIds', newIds);
             });
+            console.log('Saving');
             return Parse.Object.saveAll(messages, { useMasterKey: true });
         }).then(function(user) {
             response.success(user);
