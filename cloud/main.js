@@ -644,7 +644,7 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
                 'x-li-format': 'json'
         }}));
         promises.push(Parse.Cloud.httpRequest({
-            url: 'https://api.linkedin.com/v1/people/~/picture-urls::(original)',
+            url: 'https://api.linkedin.com/v1/people/~:(picture-url)',
             params: {
                 'oauth2_access_token' : token
             },
@@ -654,11 +654,12 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
         }}));
         Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
             profile = profileReponse[0]['data'];
+            // console.log('avatar:' + JSON.stringify(avatarReponse[0]));
 
             // var avatar = JSON.stringify(avatarReponse[0]['data']);
-            console.log('avatar:' + JSON.stringify(avatarReponse[0]));
-            console.log('avatar1:' + JSON.stringify(avatarReponse[0]['data']));
-            console.log('avatar2:' + avatarReponse[0]);
+            console.log('avatar:' + JSON.stringify(avatarReponse));
+            // console.log('avatar1:' + JSON.stringify(avatarReponse[0]['data']));
+            // console.log('avatar2:' + avatarReponse[0]);
 
             // console.log('avatar:' + avatar);
             // console.log('status2:' + status2);
