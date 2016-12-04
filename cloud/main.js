@@ -194,13 +194,10 @@ Parse.Cloud.define("like", function(request, response) {
         var query = new Parse.Query('Activity');
         query.include('owner');
         query.get(activityId, { useMasterKey: true }).then(function(activity) {
-          console.log('Activity found');
-
             var userId = currentUser.id;
             activity.addUnique('likerIds', userId);
             return activity.save(null, { useMasterKey: true });
         }).then(function(activity) {
-          console.log('Save successful');
             var owner = activity.get('owner');
             var text = activity.get('activity');
             var data = {
@@ -224,7 +221,6 @@ Parse.Cloud.define("unlike", function(request, response) {
         var query = new Parse.Query('Activity');
         query.include('owner');
         query.get(activityId, { useMasterKey: true }).then(function(activity) {
-            console.log('Activity found');
             var userId = currentUser.id;
             activity.remove('likerIds', userId);
             return activity.save(null, { useMasterKey: true });
@@ -246,8 +242,6 @@ Parse.Cloud.define("meetup_like", function(request, response) {
         query.equalTo('meetupId', meetupId);
         query.find({ useMasterKey: true }).then(function(searchResults) {
         	var meetup = searchResults[0];
-        	console.log('Meetup found: ' + searchResults.length);
-
             var userId = request.user.id;
             meetup.addUnique('likerIds', userId);
             return meetup.save(null, { useMasterKey: true });
@@ -269,7 +263,6 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
         query.equalTo('meetupId', meetupId);
         query.find({ useMasterKey: true }).then(function(searchResults) {
         	var meetup = searchResults[0];
-        	console.log('Meetup found: ' + searchResults.length);
             var userId = request.user.id;
             meetup.remove('likerIds', userId);
             return meetup.save(null, { useMasterKey: true });
@@ -377,6 +370,7 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
 // });
 
 function handleNotifications(type, text, data, recipients, pushOnly, currentUser) {
+  console.log('Handle Notification method');
     if (pushOnly === true) {
         return handlePush(type, text, data, recipients, [], currentUser);
     } else {
@@ -392,9 +386,12 @@ function handleNotifications(type, text, data, recipients, pushOnly, currentUser
             notification.set('text', text);
             notification.set('data', data);
             notification.set('read', false);
+            console.log('Notification created, saving');
             return notification.save(null, { useMasterKey: true });
         });
         return Parse.Promise.when(promises).then(function(notifications) {
+          console.log('Handle Push method');
+
             return handlePush(type, text, data, recipients, notifications, currentUser);
         });
     }
