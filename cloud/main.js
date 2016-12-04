@@ -201,13 +201,13 @@ Parse.Cloud.define("like", function(request, response) {
             return activity.save(null, { useMasterKey: true });
         }).then(function(activity) {
           console.log('Save successful');
-            var owner = activity.get('owner');
-            var text = activity.get('activity');
-            var data = {
-                'activityId': activity.id
-            };
-            return handleNotifications('like', text, data, [owner], false, currentUser);
-        }).then(function() {
+        //     var owner = activity.get('owner');
+        //     var text = activity.get('activity');
+        //     var data = {
+        //         'activityId': activity.id
+        //     };
+        //     return handleNotifications('like', text, data, [owner], false, currentUser);
+        // }).then(function() {
             response.success();
         }, function(error) {
             response.error('Error liking activity: ' + JSON.stringify(error));
@@ -228,7 +228,7 @@ Parse.Cloud.define("unlike", function(request, response) {
             var userId = currentUser.id;
             activity.remove('likerIds', userId);
             return activity.save(null, { useMasterKey: true });
-        }).then(function() {
+        }).then(function(activity) {
             response.success();
         }, function(error) {
             response.error('Error liking activity: ' + JSON.stringify(error));
