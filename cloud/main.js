@@ -50,7 +50,7 @@ Parse.Cloud.define("mark_notification_read", function(request, response) {
         response.error('notificationId must be supplied');
     } else {
         var query = new Parse.Query('Notification');
-        query.equalTo('objectId', notificationId);
+        query.equalTo('_id', notificationId);
         query.get({ useMasterKey: true }).then(function(notification) {
             if (notification.get('read') === true) {
                 return Parse.Promise.error("Notification already marked as read");
