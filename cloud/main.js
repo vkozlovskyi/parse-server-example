@@ -757,9 +757,7 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 	        	meetups.push(argument);
 	  		}
 
-	    	response.success({
-		    	meetups: meetups
-	  		});
+	    	response.success(meetups);
 		});
     	}, function(error) {
         	response.error(error);
