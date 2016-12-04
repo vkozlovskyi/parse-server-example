@@ -65,28 +65,28 @@ Parse.Cloud.define("mark_notification_read", function(request, response) {
     }
 });
 
-Parse.Cloud.beforeSave("Conversation", function(request, response) {
-    // Parse.Cloud.useMasterKey();
-    var conversation = request.object;
-    if (conversation.isNew() !== true) {
-        response.success();
-    } else {
-        var conversationKey = conversation.get('conversationKey');
-        var owner = conversation.get('owner');
-        var query = new Parse.Query('Conversation');
-        query.equalTo('conversationKey', conversationKey);
-        query.equalTo('owner', owner);
-        query.count({ useMasterKey: true }).then(function(count) {
-            if (count > 0) {
-                response.error("Conversation already exists for user " + owner.id + " conversationKey " + conversationKey);
-            } else {
-                response.success();
-            }
-        }, function(error) {
-            response.error("Error fetching conversations in Conversation beforeSave");
-        });
-    }
-});
+// Parse.Cloud.beforeSave("Conversation", function(request, response) {
+//     // Parse.Cloud.useMasterKey();
+//     var conversation = request.object;
+//     if (conversation.isNew() !== true) {
+//         response.success();
+//     } else {
+//         var conversationKey = conversation.get('conversationKey');
+//         var owner = conversation.get('owner');
+//         var query = new Parse.Query('Conversation');
+//         query.equalTo('conversationKey', conversationKey);
+//         query.equalTo('owner', owner);
+//         query.count({ useMasterKey: true }).then(function(count) {
+//             if (count > 0) {
+//                 response.error("Conversation already exists for user " + owner.id + " conversationKey " + conversationKey);
+//             } else {
+//                 response.success();
+//             }
+//         }, function(error) {
+//             response.error("Error fetching conversations in Conversation beforeSave");
+//         });
+//     }
+// });
 
 // Parse.Cloud.define("mark_messages_read", function(request, response) {
 //     Parse.Cloud.useMasterKey();
@@ -183,99 +183,99 @@ Parse.Cloud.beforeSave("Conversation", function(request, response) {
 //         });
 //     }
 // });
-//
-// Parse.Cloud.define("like", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var activityId = request.params.activityId;
-//     if (!activityId) {
-//         response.error('activityId must be supplied');
-//     } else {
-//         var query = new Parse.Query('Activity');
-//         query.include('owner');
-//         query.get(activityId).then(function(activity) {
-//             var userId = Parse.User.current().id;
-//             activity.addUnique('likerIds', userId);
-//             return activity.save();
-//         }).then(function(activity) {
-//             var owner = activity.get('owner');
-//             var text = activity.get('activity');
-//             var data = {
-//                 'activityId': activity.id
-//             };
-//             return handleNotifications('like', text, data, [owner], false);
-//         }).then(function() {
-//             response.success();
-//         }, function(error) {
-//             response.error('Error liking activity: ' + JSON.stringify(error));
-//         });
-//     }
-// });
-//
-// Parse.Cloud.define("unlike", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var activityId = request.params.activityId;
-//     if (!activityId) {
-//         response.error('activityId must be supplied');
-//     } else {
-//         var query = new Parse.Query('Activity');
-//         query.include('owner');
-//         query.get(activityId).then(function(activity) {
-//             var userId = Parse.User.current().id;
-//             activity.remove('likerIds', userId);
-//             return activity.save();
-//         }).then(function() {
-//             response.success();
-//         }, function(error) {
-//             response.error('Error liking activity: ' + JSON.stringify(error));
-//         });
-//     }
-// });
-//
-// Parse.Cloud.define("meetup_like", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var meetupId = request.params.meetupId;
-//     if (!meetupId) {
-//         response.error('meetupId must be supplied');
-//     } else {
-//         var query = new Parse.Query('Meetup');
-//         query.equalTo('meetupId', meetupId);
-//         query.find().then(function(searchResults) {
-//         	var meetup = searchResults[0];
-//         	console.log('Meetup found: ' + searchResults.length);
-//
-//             var userId = Parse.User.current().id;
-//             meetup.addUnique('likerIds', userId);
-//             return meetup.save();
-//         }).then(function() {
-//             response.success();
-//         }, function(error) {
-//             response.error('Error liking meetup: ' + JSON.stringify(error));
-//         });
-//     }
-// });
-//
-// Parse.Cloud.define("meetup_unlike", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var meetupId = request.params.meetupId;
-//     if (!meetupId) {
-//         response.error('meetupId must be supplied');
-//     } else {
-//         var query = new Parse.Query('Meetup');
-//         query.equalTo('meetupId', meetupId);
-//         query.find().then(function(searchResults) {
-//         	var meetup = searchResults[0];
-//         	console.log('Meetup found: ' + searchResults.length);
-//             var userId = Parse.User.current().id;
-//             meetup.remove('likerIds', userId);
-//             return meetup.save();
-//         }).then(function() {
-//             response.success();
-//         }, function(error) {
-//             response.error('Error liking meetup: ' + JSON.stringify(error));
-//         });
-//     }
-// });
-//
+
+Parse.Cloud.define("like", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var activityId = request.params.activityId;
+    if (!activityId) {
+        response.error('activityId must be supplied');
+    } else {
+        var query = new Parse.Query('Activity');
+        query.include('owner');
+        query.get(activityId).then(function(activity) {
+            var userId = Parse.User.current().id;
+            activity.addUnique('likerIds', userId);
+            return activity.save({ useMasterKey: true });
+        }).then(function(activity) {
+            var owner = activity.get('owner');
+            var text = activity.get('activity');
+            var data = {
+                'activityId': activity.id
+            };
+            return handleNotifications('like', text, data, [owner], false);
+        }).then(function() {
+            response.success();
+        }, function(error) {
+            response.error('Error liking activity: ' + JSON.stringify(error));
+        });
+    }
+});
+
+Parse.Cloud.define("unlike", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var activityId = request.params.activityId;
+    if (!activityId) {
+        response.error('activityId must be supplied');
+    } else {
+        var query = new Parse.Query('Activity');
+        query.include('owner');
+        query.get(activityId).then(function(activity) {
+            var userId = Parse.User.current().id;
+            activity.remove('likerIds', userId);
+            return activity.save({ useMasterKey: true });
+        }).then(function() {
+            response.success();
+        }, function(error) {
+            response.error('Error liking activity: ' + JSON.stringify(error));
+        });
+    }
+});
+
+Parse.Cloud.define("meetup_like", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var meetupId = request.params.meetupId;
+    if (!meetupId) {
+        response.error('meetupId must be supplied');
+    } else {
+        var query = new Parse.Query('Meetup');
+        query.equalTo('meetupId', meetupId);
+        query.find({ useMasterKey: true }).then(function(searchResults) {
+        	var meetup = searchResults[0];
+        	console.log('Meetup found: ' + searchResults.length);
+
+            var userId = Parse.User.current().id;
+            meetup.addUnique('likerIds', userId);
+            return meetup.save({ useMasterKey: true });
+        }).then(function() {
+            response.success();
+        }, function(error) {
+            response.error('Error liking meetup: ' + JSON.stringify(error));
+        });
+    }
+});
+
+Parse.Cloud.define("meetup_unlike", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var meetupId = request.params.meetupId;
+    if (!meetupId) {
+        response.error('meetupId must be supplied');
+    } else {
+        var query = new Parse.Query('Meetup');
+        query.equalTo('meetupId', meetupId);
+        query.find({ useMasterKey: true }).then(function(searchResults) {
+        	var meetup = searchResults[0];
+        	console.log('Meetup found: ' + searchResults.length);
+            var userId = Parse.User.current().id;
+            meetup.remove('likerIds', userId);
+            return meetup.save({ useMasterKey: true });
+        }).then(function() {
+            response.success();
+        }, function(error) {
+            response.error('Error liking meetup: ' + JSON.stringify(error));
+        });
+    }
+});
+
 // function updateActivityCommenters(comment) {
 //     var activity = comment.get('activity');
 //     return activity.fetch().then(function(activity) {
