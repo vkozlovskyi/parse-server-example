@@ -192,10 +192,10 @@ Parse.Cloud.define("like", function(request, response) {
     } else {
         var query = new Parse.Query('Activity');
         query.include('owner');
-        query.get({ useMasterKey: true }, activityId).then(function(activity) {
+        query.get(activityId).then(function(activity) {
             var userId = request.user.id;
             activity.addUnique('likerIds', userId);
-            return activity.save({ useMasterKey: true });
+            return activity.save(null, { useMasterKey: true });
         }).then(function(activity) {
             var owner = activity.get('owner');
             var text = activity.get('activity');
@@ -219,10 +219,10 @@ Parse.Cloud.define("unlike", function(request, response) {
     } else {
         var query = new Parse.Query('Activity');
         query.include('owner');
-        query.get({ useMasterKey: true }, activityId).then(function(activity) {
+        query.get(activityId).then(function(activity) {
             var userId = request.user.id;
             activity.remove('likerIds', userId);
-            return activity.save({ useMasterKey: true });
+            return activity.save(null, { useMasterKey: true });
         }).then(function() {
             response.success();
         }, function(error) {
@@ -245,7 +245,7 @@ Parse.Cloud.define("meetup_like", function(request, response) {
 
             var userId = request.user.id;
             meetup.addUnique('likerIds', userId);
-            return meetup.save({ useMasterKey: true });
+            return meetup.save(null, { useMasterKey: true });
         }).then(function() {
             response.success();
         }, function(error) {
@@ -267,7 +267,7 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
         	console.log('Meetup found: ' + searchResults.length);
             var userId = request.user.id;
             meetup.remove('likerIds', userId);
-            return meetup.save({ useMasterKey: true });
+            return meetup.save(null, { useMasterKey: true });
         }).then(function() {
             response.success();
         }, function(error) {
