@@ -456,12 +456,10 @@ Parse.Cloud.define("activities", function(request, response) {
 
         var promise = Parse.Promise.when(promises);
         promise.then(function(activities, users) {
-          
-            console.log('Activities: ' + activities);
-            console.log('Activities count: ' + activities.count);
+          console.log('Activities and users');
+            console.dir(activities);
+            console.dir(users);
 
-            console.log('Users: ' + users);
-            console.log('Users count: ' + users.count);
 
             activities = activities || [];
             activities = activities.slice(0, maxResults);
