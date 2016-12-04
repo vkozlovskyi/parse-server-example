@@ -226,7 +226,7 @@ Parse.Cloud.define("unlike", function(request, response) {
             console.log('Activity found');
             var userId = currentUser.id;
             activity.remove('likerIds', userId);
-            return activity.save(null, { useMasterKey: true });
+            return activity.save({ useMasterKey: true });
         }).then(function() {
             response.success();
         }, function(error) {
