@@ -193,7 +193,7 @@ Parse.Cloud.define("like", function(request, response) {
         var query = new Parse.Query('Activity');
         query.include('owner');
         query.get(activityId).then(function(activity) {
-            var userId = Parse.User.current().id;
+            var userId = request.user.id;
             activity.addUnique('likerIds', userId);
             return activity.save({ useMasterKey: true });
         }).then(function(activity) {
@@ -220,7 +220,7 @@ Parse.Cloud.define("unlike", function(request, response) {
         var query = new Parse.Query('Activity');
         query.include('owner');
         query.get(activityId).then(function(activity) {
-            var userId = Parse.User.current().id;
+            var userId = request.user.id;
             activity.remove('likerIds', userId);
             return activity.save({ useMasterKey: true });
         }).then(function() {
@@ -243,7 +243,7 @@ Parse.Cloud.define("meetup_like", function(request, response) {
         	var meetup = searchResults[0];
         	console.log('Meetup found: ' + searchResults.length);
 
-            var userId = Parse.User.current().id;
+            var userId = request.user.id;
             meetup.addUnique('likerIds', userId);
             return meetup.save({ useMasterKey: true });
         }).then(function() {
@@ -265,7 +265,7 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
         query.find({ useMasterKey: true }).then(function(searchResults) {
         	var meetup = searchResults[0];
         	console.log('Meetup found: ' + searchResults.length);
-            var userId = Parse.User.current().id;
+            var userId = request.user.id;
             meetup.remove('likerIds', userId);
             return meetup.save({ useMasterKey: true });
         }).then(function() {
@@ -370,64 +370,64 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
 //
 //     }
 // });
-//
-// function handleNotifications(type, text, data, recipients, pushOnly) {
-//     if (pushOnly === true) {
-//         return handlePush(type, text, data, recipients, []);
-//     } else {
-//         var sender = Parse.User.current();
-//         var promises = _.map(recipients, function(owner) {
-//             var Notification = Parse.Object.extend('Notification');
-//             var notification = new Notification({
-//                 ACL: new Parse.ACL(owner)
-//             });
-//             notification.set('type', type);
-//             notification.set('owner', owner);
-//             notification.set('sender', sender);
-//             notification.set('text', text);
-//             notification.set('data', data);
-//             notification.set('read', false);
-//             return notification.save();
-//         });
-//         return Parse.Promise.when(promises).then(function(notifications) {
-//             return handlePush(type, text, data, recipients, notifications);
-//         });
-//     }
-// }
-//
-// function handlePush(type, text, data, recipients, notifications) {
-//     data['type'] = type;
-//     if (_.isArray(notifications) !== true) {
-//         notifications = [notifications];
-//     }
-//     var sender = Parse.User.current();
-//     var senderName = sender.get('firstName')+' '+sender.get('lastName');
-//     if (type === 'like') {
-//         text = senderName+' liked your activity: "'+text+'"';
-//     } else if (type === 'comment') {
-//         text = senderName+' has commented on your activity: "'+text+'"';
-//     }
-//     var payloads = _.zip(recipients, notifications);
-//     var promises = _.map(payloads, function(payload) {
-//         var user = _.first(payload);
-//         var notification = _.last(payload);
-//         var query = new Parse.Query(Parse.Installation);
-//         query.equalTo('user', user);
-//         if (typeof notification !== 'undefined') {
-//             data['notificationId'] = notification.id;
-//         }
-//         return Parse.Push.send({
-//            'where': query,
-//            'data': {
-//                 'alert': text,
-//                 'badge': 'Increment',
-//                 'content-available': 1,
-//                 'data': data
-//            }
-//         });
-//     });
-//     return Parse.Promise.when(promises);
-// }
+
+function handleNotifications(type, text, data, recipients, pushOnly) {
+    if (pushOnly === true) {
+        return handlePush(type, text, data, recipients, []);
+    } else {
+        var sender = Parse.User.current();
+        var promises = _.map(recipients, function(owner) {
+            var Notification = Parse.Object.extend('Notification');
+            var notification = new Notification({
+                ACL: new Parse.ACL(owner)
+            });
+            notification.set('type', type);
+            notification.set('owner', owner);
+            notification.set('sender', sender);
+            notification.set('text', text);
+            notification.set('data', data);
+            notification.set('read', false);
+            return notification.save();
+        });
+        return Parse.Promise.when(promises).then(function(notifications) {
+            return handlePush(type, text, data, recipients, notifications);
+        });
+    }
+}
+
+function handlePush(type, text, data, recipients, notifications) {
+    data['type'] = type;
+    if (_.isArray(notifications) !== true) {
+        notifications = [notifications];
+    }
+    var sender = Parse.User.current();
+    var senderName = sender.get('firstName')+' '+sender.get('lastName');
+    if (type === 'like') {
+        text = senderName+' liked your activity: "'+text+'"';
+    } else if (type === 'comment') {
+        text = senderName+' has commented on your activity: "'+text+'"';
+    }
+    var payloads = _.zip(recipients, notifications);
+    var promises = _.map(payloads, function(payload) {
+        var user = _.first(payload);
+        var notification = _.last(payload);
+        var query = new Parse.Query(Parse.Installation);
+        query.equalTo('user', user);
+        if (typeof notification !== 'undefined') {
+            data['notificationId'] = notification.id;
+        }
+        return Parse.Push.send({
+           'where': query,
+           'data': {
+                'alert': text,
+                'badge': 'Increment',
+                'content-available': 1,
+                'data': data
+           }
+        });
+    });
+    return Parse.Promise.when(promises);
+}
 
 Parse.Cloud.define("activities", function(request, response) {
     var location = request.params.location;
