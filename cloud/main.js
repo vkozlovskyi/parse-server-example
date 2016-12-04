@@ -14,19 +14,19 @@ Parse.Cloud.define("unread_counts", function(request, response) {
 
     query = new Parse.Query('Message');
     query.equalTo('unreadUserIds', currentUser.id);
-    promises.push(query.find({ useMasterKey: true }));
+    promises.push(query.find({ sessionToken: token }));
 
     query = new Parse.Query('Notification');
     query.equalTo('owner', currentUser);
     query.equalTo('read', false);
-    promises.push(query.count({ useMasterKey: true }));
+    promises.push(query.count({ sessionToken: token }));
 
     var promise = Parse.Promise.when(promises);
     promise.then(function(messages, notificationCount) {
 
       console.log('count updated');
-      console.dir(messages)
-      console.dir(notificationCount)
+      console.dir(messages);
+      console.dir(notificationCount);
 
         var responseObj = {};
         responseObj['messages'] = messages.length || 0;
