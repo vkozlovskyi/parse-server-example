@@ -426,7 +426,7 @@ function handlePush(type, text, data, recipients, notifications, currentUser) {
                 'content-available': 1,
                 'data': data
            }
-        });
+        }, { useMasterKey: true });
     });
     return Parse.Promise.when(promises);
 }
