@@ -460,17 +460,9 @@ Parse.Cloud.define("activities", function(request, response) {
           var activities = activitiesAndUsers[0];
           var users = activitiesAndUsers[1];
 
-          console.log('Activities and users 1');
-            console.dir(activities);
-            console.dir(users);
-
             activities = activities || [];
             activities = activities.slice(0, maxResults);
             var activityCount = activities.length;
-
-            console.log('Activities and users 2');
-              console.dir(activities);
-              console.dir(users);
 
             var maxUsers = Math.max(50 - activityCount, 0);
             var onlineWindowMaxSeconds = 3600 * 4; /* 4 hours */
@@ -483,10 +475,6 @@ Parse.Cloud.define("activities", function(request, response) {
             var offlineUsers = _.difference(users, onlineUsers);
             var sortedUsers = onlineUsers.concat(offlineUsers);
             var slicedUsers = sortedUsers.slice(0, maxUsers);
-
-            console.log('Activities and users 3');
-              console.dir(activities);
-              console.dir(slicedUsers);
 
             var responseObj = {
                 'activities': activities,
@@ -775,6 +763,9 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 	    		var argument = arguments[i];
 	        	meetups.push(argument);
 	  		}
+
+        console.log('Meetups updated');
+        console.dir(meetups);
 
 	    	response.success({
 		    	meetups: meetups
