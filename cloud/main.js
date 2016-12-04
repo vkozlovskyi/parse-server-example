@@ -654,15 +654,10 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
         }}));
         Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
             profile = profileReponse[0]['data'];
-            // console.log('avatar:' + JSON.stringify(avatarReponse[0]));
 
-            // var avatar = JSON.stringify(avatarReponse[0]['data']);
-            console.log('avatar:' + JSON.stringify(avatarReponse));
-            // console.log('avatar1:' + JSON.stringify(avatarReponse[0]['data']));
-            // console.log('avatar2:' + avatarReponse[0]);
+            console.log('profile:' + profile);
 
-            // console.log('avatar:' + avatar);
-            // console.log('status2:' + status2);
+            console.log('avatar:' + avatarReponse);
 
             profile.largePictureUrl = '';
             if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
