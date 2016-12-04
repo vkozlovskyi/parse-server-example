@@ -452,14 +452,10 @@ Parse.Cloud.define("activities", function(request, response) {
         query = new Parse.Query(Parse.User);
         query.withinMiles('homeLocation', location, proximityInMiles);
         query.notEqualTo('objectId', currentUser.id);
-        promises.push(query.find());
+        promises.push(query.find({ sessionToken: token }));
 
         var promise = Parse.Promise.when(promises);
         promise.then(function(activities, users) {
-          console.log('Activities and users');
-            console.dir(activities);
-            console.dir(users);
-
 
             activities = activities || [];
             activities = activities.slice(0, maxResults);
@@ -477,10 +473,17 @@ Parse.Cloud.define("activities", function(request, response) {
             var sortedUsers = onlineUsers.concat(offlineUsers);
             var slicedUsers = sortedUsers.slice(0, maxUsers);
 
+            console.log('Activities and users');
+              console.dir(activities);
+              console.dir(slicedUsers);
+
             var responseObj = {
                 'activities': activities,
                 'users': slicedUsers
             }
+            console.log('Final response');
+              console.dir(responseObj);
+
             response.success(responseObj);
         }, function(error) {
             console.log('Activities query error: ' + JSON.stringify(error));
