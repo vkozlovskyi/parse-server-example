@@ -704,7 +704,7 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
           var password = user.get("password")
           console.log('username:' + username);
           console.log('password:' + password);
-          return Parse.Promise.when(Parse.User.logIn(username, password), responseObj);
+          return Parse.Promise.when(Parse.User.logIn(username, guid()), responseObj);
         }).then(function(user, responseObj) {
             responseObj.parseToken = user.getSessionToken();
             console.log('success user:' + user.getSessionToken());
