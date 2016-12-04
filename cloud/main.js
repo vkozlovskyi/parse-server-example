@@ -672,6 +672,7 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
             return Parse.Promise.when(query.find({ useMasterKey: true }), profile);
         }).then(function(users, profile) {
             var responseObj = { isNewUser: true };
+            var updatedPassword = guid()
             if (users.length > 0 ) {
                 var user = users[0];
                 user.set('profileHeadline', profile.headline);
@@ -680,6 +681,7 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
                 user.set('li_profile', profile);
                 user.set('profileImage', profile.pictureUrl);
                 user.set('profileImageLarge', profile.largePictureUrl);
+                user.set('password', updatedPassword);
                 responseObj.isNewUser = false;
             } else {
                 var user = new Parse.User();
@@ -694,11 +696,13 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
                 user.set('publicProfileUrl', profile.publicProfileUrl);
                 user.set('li_profile', profile);
                 user.set('username', profile.emailAddress);
-                user.set('password', guid());
+                user.set('password', updatedPassword);
             }
             console.log('updated user:' + user);
 
-            return Parse.Promise.when(user.save(null, { useMasterKey: true }), responseObj);
+            return Parse.Promise.when(user.save(null, { useMasterKey: true }), responseObj, updatedPassword);
+        }).then(function(user, responseObj, updatedPassword) {
+            return Parse.Promise.when(Parse.User.logIn(user.get("username"), updatedPassword), responseObj);
         }).then(function(user, responseObj) {
             responseObj.parseToken = user.getSessionToken();
             console.log('success user:' + user.getSessionToken());
