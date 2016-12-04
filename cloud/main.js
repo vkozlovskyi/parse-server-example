@@ -455,7 +455,10 @@ Parse.Cloud.define("activities", function(request, response) {
         promises.push(query.find({ sessionToken: token }));
 
         var promise = Parse.Promise.when(promises);
-        promise.then(function(activities, users) {
+        promise.then(function(activitiesAndUsers) {
+
+          var activities = activitiesAndUsers[0];
+          var users = activitiesAndUsers[1];
 
           console.log('Activities and users 1');
             console.dir(activities);
