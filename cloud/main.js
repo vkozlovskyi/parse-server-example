@@ -91,7 +91,7 @@ Parse.Cloud.beforeSave("Conversation", function(request, response) {
 Parse.Cloud.define("mark_messages_read", function(request, response) {
     // Parse.Cloud.useMasterKey();
     var messageIds = request.params.messageIds;
-    var currentUserId = response.user.id;
+    var currentUserId = request.user.id;
     if (!messageIds) {
         response.error('messageIds must be supplied');
     } else {
