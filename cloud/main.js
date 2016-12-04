@@ -561,8 +561,8 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
         }}));
         Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
             var profile = profileReponse.data;
-            console.log('Received data:' + JSON.stringify(profileReponse));
-            console.log('Received avatar:' + JSON.stringify(avatarReponse));
+            // console.log('Received data:' + JSON.stringify(profileReponse));
+            // console.log('Received avatar:' + JSON.stringify(avatarReponse));
 
             profile.largePictureUrl = '';
             if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
@@ -575,7 +575,7 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
             query.equalTo('li_uid', profile.id);
             return Parse.Promise.when(query.find({ useMasterKey: true }), profile);
         }).then(function(users, profile) {
-          console.log('Users:' + users);
+          // console.log('Users:' + users);
             var responseObj = { isNewUser: true };
             if (users.length > 0 ) {
                 var user = users[0];
