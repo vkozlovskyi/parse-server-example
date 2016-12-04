@@ -663,7 +663,7 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
             // if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
             //     profile.largePictureUrl = avatarReponse.data.values[0];
             // }
-            console.log('prof:' + JSON.stringify(profile);
+            console.log('prof:' + JSON.stringify(profile));
             return Parse.Promise.as(profile);
         }).then(function(profile) {
           console.log('SUCCESS');
