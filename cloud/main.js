@@ -452,10 +452,17 @@ Parse.Cloud.define("activities", function(request, response) {
         query = new Parse.Query(Parse.User);
         query.withinMiles('homeLocation', location, proximityInMiles);
         query.notEqualTo('objectId', currentUser.id);
-        promises.push(query.find({ sessionToken: token }));
+        promises.push(query.find());
 
         var promise = Parse.Promise.when(promises);
         promise.then(function(activities, users) {
+          
+            console.log('Activities: ' + activities);
+            console.log('Activities count: ' + activities.count);
+
+            console.log('Users: ' + users);
+            console.log('Users count: ' + users.count);
+
             activities = activities || [];
             activities = activities.slice(0, maxResults);
             var activityCount = activities.length;
@@ -756,10 +763,10 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 	    		var argument = arguments[i];
 	        	meetups.push(argument);
 	  		}
-        var responseObj = {
-            'meetups': meetups,
-        }
-	    	response.success({ responseObj });
+
+	    	response.success({
+		    	meetups: meetups
+	  		});
 		});
     	}, function(error) {
         	response.error(error);
