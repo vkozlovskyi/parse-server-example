@@ -65,124 +65,124 @@ Parse.Cloud.define("mark_notification_read", function(request, response) {
     }
 });
 
-// Parse.Cloud.beforeSave("Conversation", function(request, response) {
-//     // Parse.Cloud.useMasterKey();
-//     var conversation = request.object;
-//     if (conversation.isNew() !== true) {
-//         response.success();
-//     } else {
-//         var conversationKey = conversation.get('conversationKey');
-//         var owner = conversation.get('owner');
-//         var query = new Parse.Query('Conversation');
-//         query.equalTo('conversationKey', conversationKey);
-//         query.equalTo('owner', owner);
-//         query.count({ useMasterKey: true }).then(function(count) {
-//             if (count > 0) {
-//                 response.error("Conversation already exists for user " + owner.id + " conversationKey " + conversationKey);
-//             } else {
-//                 response.success();
-//             }
-//         }, function(error) {
-//             response.error("Error fetching conversations in Conversation beforeSave");
-//         });
-//     }
-// });
+Parse.Cloud.beforeSave("Conversation", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var conversation = request.object;
+    if (conversation.isNew() !== true) {
+        response.success();
+    } else {
+        var conversationKey = conversation.get('conversationKey');
+        var owner = conversation.get('owner');
+        var query = new Parse.Query('Conversation');
+        query.equalTo('conversationKey', conversationKey);
+        query.equalTo('owner', owner);
+        query.count({ useMasterKey: true }).then(function(count) {
+            if (count > 0) {
+                response.error("Conversation already exists for user " + owner.id + " conversationKey " + conversationKey);
+            } else {
+                response.success();
+            }
+        }, function(error) {
+            response.error("Error fetching conversations in Conversation beforeSave");
+        });
+    }
+});
 
-// Parse.Cloud.define("mark_messages_read", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var messageIds = request.params.messageIds;
-//     var currentUserId = Parse.User.current().id;
-//     if (!messageIds) {
-//         response.error('messageIds must be supplied');
-//     } else {
-//         var messages = _.map(messageIds, function(messageId) {
-//             var message = new Parse.Object("Message");
-//             message.id = messageId;
-//             return message;
-//         });
-//         Parse.Object.fetchAll(messages).then(function(messages) {
-//             _.each(messages, function(message) {
-//                 var unreadUserIds = message.get('unreadUserIds');
-//                 var newIds = _.filter(unreadUserIds, function(userId) {
-//                     return userId !== currentUserId;
-//                 });
-//                 message.set('unreadUserIds', newIds);
-//             });
-//             return Parse.Object.saveAll(messages);
-//         }).then(function(user) {
-//             response.success(user);
-//         }, function(error) {
-//             response.error('Error marking messages read');
-//             console.log('Error marking messages read: ' + JSON.stringify(error));
-//         });
-//     }
-// });
-//
-// function conversationsForMessage(message) {
-//     var conversationKey = message.get('conversationKey');
-//     var query = new Parse.Query('Conversation');
-//     query.equalTo('conversationKey', conversationKey);
-//     return query.find().then(function(conversations) {
-//         if (conversations.length === 0) {
-//             var conversations = [];
-//             var participants = message.get('participants');
-//             _.each(participants, function(owner) {
-//                 var Conversation = Parse.Object.extend("Conversation");
-//                 var conversation = new Conversation();
-//                 conversation.set('owner', owner);
-//                 conversation.set('conversationKey', conversationKey);
-//                 conversation.set('participants', participants);
-//                 conversations.push(conversation);
-//             });
-//             return Parse.Object.saveAll(conversations);
-//         } else {
-//             return Parse.Promise.as(conversations);
-//         }
-//     });
-// }
-//
-// Parse.Cloud.afterSave("Message", function(request) {
-//     Parse.Cloud.useMasterKey();
-//     var message = request.object;
-//     if (message.existed() === true) {
-//         // Ignore
-//     } else {
-//         var currentUserId = Parse.User.current().id;
-//         var promise = conversationsForMessage(message);
-//         promise.then(function(conversations) {
-//             var promises = _.map(conversations, function(conversation) {
-//                 conversation.set('lastMessage', message);
-//                 return conversation.save();
-//             });
-//             return Parse.Promise.when(promises);
-//         }).then(function() {
-//             var conversations = Array.prototype.slice.call(arguments);
-//             var users = _.filter(conversations, function(conversation) {
-//                 return conversation.get('owner').id !== currentUserId;
-//             }).map(function(conversation) {
-//                 var user = new Parse.User();
-//                 user.id = conversation.get('owner').id;
-//                 return user;
-//             });
-//             var sender = Parse.User.current();
-//             var text = message.get('text');
-//             var participantIds = _.map(users, function(user) {
-//                 return user.id;
-//             });
-//             participantIds.push(sender.id);
-//             var data = {
-//                 'messageId': message.id,
-//                 'participantIds': participantIds
-//             };
-//             return handleNotifications('message', text, data, users, true);
-//         }).then(function() {
-//             console.log('Message ' + message.id + ' processed');
-//             // All ok
-//         }, function(error) {
-//             console.log('Error processing new message: ' + JSON.stringify(error));
-//         });
-//     }
-// });
+Parse.Cloud.define("mark_messages_read", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var messageIds = request.params.messageIds;
+    var currentUserId = response.user.id;
+    if (!messageIds) {
+        response.error('messageIds must be supplied');
+    } else {
+        var messages = _.map(messageIds, function(messageId) {
+            var message = new Parse.Object("Message");
+            message.id = messageId;
+            return message;
+        });
+        Parse.Object.fetchAll(messages, { useMasterKey: true }).then(function(messages) {
+            _.each(messages, function(message) {
+                var unreadUserIds = message.get('unreadUserIds');
+                var newIds = _.filter(unreadUserIds, function(userId) {
+                    return userId !== currentUserId;
+                });
+                message.set('unreadUserIds', newIds);
+            });
+            return Parse.Object.saveAll(messages, { useMasterKey: true });
+        }).then(function(user) {
+            response.success(user);
+        }, function(error) {
+            response.error('Error marking messages read');
+            console.log('Error marking messages read: ' + JSON.stringify(error));
+        });
+    }
+});
+
+function conversationsForMessage(message) {
+    var conversationKey = message.get('conversationKey');
+    var query = new Parse.Query('Conversation');
+    query.equalTo('conversationKey', conversationKey);
+    return query.find({ useMasterKey: true }).then(function(conversations) {
+        if (conversations.length === 0) {
+            var conversations = [];
+            var participants = message.get('participants');
+            _.each(participants, function(owner) {
+                var Conversation = Parse.Object.extend("Conversation");
+                var conversation = new Conversation();
+                conversation.set('owner', owner);
+                conversation.set('conversationKey', conversationKey);
+                conversation.set('participants', participants);
+                conversations.push(conversation);
+            });
+            return Parse.Object.saveAll(conversations, { useMasterKey: true });
+        } else {
+            return Parse.Promise.as(conversations);
+        }
+    });
+}
+
+Parse.Cloud.afterSave("Message", function(request) {
+    // Parse.Cloud.useMasterKey();
+    var message = request.object;
+    if (message.existed() === true) {
+        // Ignore
+    } else {
+        var currentUserId = request.user.id;
+        var promise = conversationsForMessage(message);
+        promise.then(function(conversations) {
+            var promises = _.map(conversations, function(conversation) {
+                conversation.set('lastMessage', message);
+                return conversation.save(null, { useMasterKey: true });
+            });
+            return Parse.Promise.when(promises);
+        }).then(function() {
+            var conversations = Array.prototype.slice.call(arguments);
+            var users = _.filter(conversations, function(conversation) {
+                return conversation.get('owner').id !== currentUserId;
+            }).map(function(conversation) {
+                var user = new Parse.User();
+                user.id = conversation.get('owner').id;
+                return user;
+            });
+            var sender = request.user;
+            var text = message.get('text');
+            var participantIds = _.map(users, function(user) {
+                return user.id;
+            });
+            participantIds.push(sender.id);
+            var data = {
+                'messageId': message.id,
+                'participantIds': participantIds
+            };
+            return handleNotifications('message', text, data, users, true, sender);
+        }).then(function() {
+            console.log('Message ' + message.id + ' processed');
+            // All ok
+        }, function(error) {
+            console.log('Error processing new message: ' + JSON.stringify(error));
+        });
+    }
+});
 
 Parse.Cloud.define("like", function(request, response) {
     // Parse.Cloud.useMasterKey();
