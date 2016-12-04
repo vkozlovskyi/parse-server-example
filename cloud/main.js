@@ -655,11 +655,11 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
         Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
             var profileString = JSON.stringify(profileReponse[0]['text']);
             profile = profileReponse[0]['data'];
-            profile1 = profileReponse[0]['buffer']['data'];
+            profile1 = JSON.stringify(profileReponse[0]['data']);
 
             // var avatar = JSON.stringify(avatarReponse[0]['data']);
-            console.log('data' + JSON.stringify(profile));
-            console.log('profile2:' + JSON.stringify(profile1));
+            console.log('data:' + profile.id);
+            console.log('profile2:' + profile1.id);
             console.log('profile3:' + JSON.stringify(profile1['id']));
 
             // console.log('avatar:' + avatar);
