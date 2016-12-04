@@ -19,7 +19,7 @@ Parse.Cloud.define("unread_counts", function(request, response) {
     query = new Parse.Query('Notification');
     query.equalTo('owner', currentUser);
     query.equalTo('read', false);
-    promises.push(query.count());
+    promises.push(query.count({ sessionToken: token, useMasterKey: true }));
 
     var promise = Parse.Promise.when(promises);
     promise.then(function(messages, notificationCount) {
@@ -42,18 +42,19 @@ Parse.Cloud.define("unread_counts", function(request, response) {
 });
 
 Parse.Cloud.define("mark_notification_read", function(request, response) {
-    Parse.Cloud.useMasterKey();
+    // Parse.Cloud.useMasterKey();
     var notificationId = request.params.notificationId;
     if (!notificationId) {
         response.error('notificationId must be supplied');
     } else {
         var query = new Parse.Query('Notification');
-        query.get(notificationId).then(function(notification) {
+        query.equalTo('objectId', notificationId);
+        query.get({ useMasterKey: true }).then(function(notification) {
             if (notification.get('read') === true) {
                 return Parse.Promise.error("Notification already marked as read");
             }
             notification.set('read', true);
-            return notification.save();
+            return notification.save(null, { useMasterKey: true });
         }).then(function(user) {
             response.success(user);
         }, function(error) {
@@ -63,29 +64,29 @@ Parse.Cloud.define("mark_notification_read", function(request, response) {
     }
 });
 
-// Parse.Cloud.beforeSave("Conversation", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var conversation = request.object;
-//     if (conversation.isNew() !== true) {
-//         response.success();
-//     } else {
-//         var conversationKey = conversation.get('conversationKey');
-//         var owner = conversation.get('owner');
-//         var query = new Parse.Query('Conversation');
-//         query.equalTo('conversationKey', conversationKey);
-//         query.equalTo('owner', owner);
-//         query.count().then(function(count) {
-//             if (count > 0) {
-//                 response.error("Conversation already exists for user " + owner.id + " conversationKey " + conversationKey);
-//             } else {
-//                 response.success();
-//             }
-//         }, function(error) {
-//             response.error("Error fetching conversations in Conversation beforeSave");
-//         });
-//     }
-// });
-//
+Parse.Cloud.beforeSave("Conversation", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var conversation = request.object;
+    if (conversation.isNew() !== true) {
+        response.success();
+    } else {
+        var conversationKey = conversation.get('conversationKey');
+        var owner = conversation.get('owner');
+        var query = new Parse.Query('Conversation');
+        query.equalTo('conversationKey', conversationKey);
+        query.equalTo('owner', owner);
+        query.count({ useMasterKey: true }).then(function(count) {
+            if (count > 0) {
+                response.error("Conversation already exists for user " + owner.id + " conversationKey " + conversationKey);
+            } else {
+                response.success();
+            }
+        }, function(error) {
+            response.error("Error fetching conversations in Conversation beforeSave");
+        });
+    }
+});
+
 // Parse.Cloud.define("mark_messages_read", function(request, response) {
 //     Parse.Cloud.useMasterKey();
 //     var messageIds = request.params.messageIds;
@@ -519,108 +520,108 @@ Parse.Cloud.define("mark_notification_read", function(request, response) {
 //     });
 // });
 //
-// Parse.Cloud.define("auth_linkedin", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var fields = [
-//         'id',
-//         'first-name',
-//         'last-name',
-//           'formatted-name',
-//           'headline',
-//           'location:(name)',
-//           'summary',
-//           'positions',
-//           'picture-url',
-//           'public-profile-url',
-//           'email-address'
-//     ];
-//     var token = request.params.liToken;
-//     if (!token) {
-//         response.error('Field liToken must be supplied');
-//     } else {
-//         var promises = [];
-//         promises.push(Parse.Cloud.httpRequest({
-//             url: 'https://api.linkedin.com/v1/people/~:(' + fields.join(',') + ')',
-//             params: {
-//                 'oauth2_access_token' : token
-//             },
-//             headers:{
-//                 'Content-Type': 'application/json',
-//                 'x-li-format': 'json'
-//         }}));
-//         promises.push(Parse.Cloud.httpRequest({
-//             url: 'https://api.linkedin.com/v1/people/~/picture-urls::(original)',
-//             params: {
-//                 'oauth2_access_token' : token
-//             },
-//             headers:{
-//                 'Content-Type': 'application/json',
-//                 'x-li-format': 'json'
-//         }}));
-//         Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
-//             var profile = profileReponse.data;
-//             profile.largePictureUrl = '';
-//             if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
-//                 profile.largePictureUrl = avatarReponse.data.values[0];
-//             }
-//             return Parse.Promise.as(profile);
-//         }).then(function(profile) {
-//             var query = new Parse.Query(Parse.User);
-//             query.equalTo('li_uid', profile.id);
-//             return Parse.Promise.when(query.find(), profile);
-//         }).then(function(users, profile) {
-//             var responseObj = { isNewUser: true };
-//             if (users.length > 0 ) {
-//                 var user = users[0];
-//                 user.set('profileHeadline', profile.headline);
-//                 user.set('profileLocationName', profile.location.name);
-//                 user.set('publicProfileUrl', profile.publicProfileUrl);
-//                 user.set('li_profile', profile);
-//                 user.set('profileImage', profile.pictureUrl);
-//                 user.set('profileImageLarge', profile.largePictureUrl);
-//                 responseObj.isNewUser = false;
-//             } else {
-//                 var user = new Parse.User();
-//                 user.set('email', profile.emailAddress);
-//                 user.set('li_uid', profile.id);
-//                 user.set('firstName', profile.firstName);
-//                 user.set('lastName', profile.lastName);
-//                 user.set('profileImage', profile.pictureUrl);
-//                 user.set('profileImageLarge', profile.largePictureUrl);
-//                 user.set('profileHeadline', profile.headline);
-//                 user.set('profileLocationName', profile.location.name);
-//                 user.set('publicProfileUrl', profile.publicProfileUrl);
-//                 user.set('li_profile', profile);
-//                 user.set('username', profile.emailAddress);
-//                 user.set('password', guid());
-//             }
-//             return Parse.Promise.when(user.save(), responseObj);
-//         }).then(function(user, responseObj) {
-//             responseObj.parseToken = user.getSessionToken();
-//             response.success(responseObj);
-//         }, function(errors) {
-//             if (typeof errors[0] !== 'undefined' && errors[0].status == 401) {
-//                 response.error(401);
-//             } else {
-//                 response.error('Authentication error');
-//             }
-//             console.log('Authentication error: ' + JSON.stringify(errors) + ' ' + JSON.stringify(request));
-//         });
-//     }
-// });
-//
-// var guid = (function() {
-//   function s4() {
-//     return Math.floor((1 + Math.random()) * 0x10000)
-//         .toString(16)
-//         .substring(1);
-//   }
-//   return function() {
-//     return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-//         s4() + '-' + s4() + s4() + s4();
-//   };
-// })();
-//
+Parse.Cloud.define("auth_linkedin", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var fields = [
+        'id',
+        'first-name',
+        'last-name',
+          'formatted-name',
+          'headline',
+          'location:(name)',
+          'summary',
+          'positions',
+          'picture-url',
+          'public-profile-url',
+          'email-address'
+    ];
+    var token = request.params.liToken;
+    if (!token) {
+        response.error('Field liToken must be supplied');
+    } else {
+        var promises = [];
+        promises.push(Parse.Cloud.httpRequest({
+            url: 'https://api.linkedin.com/v1/people/~:(' + fields.join(',') + ')',
+            params: {
+                'oauth2_access_token' : token
+            },
+            headers:{
+                'Content-Type': 'application/json',
+                'x-li-format': 'json'
+        }}));
+        promises.push(Parse.Cloud.httpRequest({
+            url: 'https://api.linkedin.com/v1/people/~/picture-urls::(original)',
+            params: {
+                'oauth2_access_token' : token
+            },
+            headers:{
+                'Content-Type': 'application/json',
+                'x-li-format': 'json'
+        }}));
+        Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
+            var profile = profileReponse.data;
+            profile.largePictureUrl = '';
+            if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
+                profile.largePictureUrl = avatarReponse.data.values[0];
+            }
+            return Parse.Promise.as(profile);
+        }).then(function(profile) {
+            var query = new Parse.Query(Parse.User);
+            query.equalTo('li_uid', profile.id);
+            return Parse.Promise.when(query.find({ useMasterKey: true }), profile);
+        }).then(function(users, profile) {
+            var responseObj = { isNewUser: true };
+            if (users.length > 0 ) {
+                var user = users[0];
+                user.set('profileHeadline', profile.headline);
+                user.set('profileLocationName', profile.location.name);
+                user.set('publicProfileUrl', profile.publicProfileUrl);
+                user.set('li_profile', profile);
+                user.set('profileImage', profile.pictureUrl);
+                user.set('profileImageLarge', profile.largePictureUrl);
+                responseObj.isNewUser = false;
+            } else {
+                var user = new Parse.User();
+                user.set('email', profile.emailAddress);
+                user.set('li_uid', profile.id);
+                user.set('firstName', profile.firstName);
+                user.set('lastName', profile.lastName);
+                user.set('profileImage', profile.pictureUrl);
+                user.set('profileImageLarge', profile.largePictureUrl);
+                user.set('profileHeadline', profile.headline);
+                user.set('profileLocationName', profile.location.name);
+                user.set('publicProfileUrl', profile.publicProfileUrl);
+                user.set('li_profile', profile);
+                user.set('username', profile.emailAddress);
+                user.set('password', guid());
+            }
+            return Parse.Promise.when(user.save({ useMasterKey: true }), responseObj);
+        }).then(function(user, responseObj) {
+            responseObj.parseToken = user.getSessionToken();
+            response.success(responseObj);
+        }, function(errors) {
+            if (typeof errors[0] !== 'undefined' && errors[0].status == 401) {
+                response.error(401);
+            } else {
+                response.error('Authentication error');
+            }
+            console.log('Authentication error: ' + JSON.stringify(errors) + ' ' + JSON.stringify(request));
+        });
+    }
+});
+
+var guid = (function() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+  }
+  return function() {
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+        s4() + '-' + s4() + s4() + s4();
+  };
+})();
+
 // Parse.Cloud.define("get_meetup_events", function(request, response) {
 //     Parse.Cloud.useMasterKey();
 //     var location = request.params.location;
