@@ -45,20 +45,22 @@ Parse.Cloud.define("unread_counts", function(request, response) {
 
 Parse.Cloud.define("mark_notification_read", function(request, response) {
     // Parse.Cloud.useMasterKey();
+    var currentUser = request.user;
+    var token = currentUser.getSessionToken();
     var notificationId = request.params.notificationId;
     if (!notificationId) {
         response.error('notificationId must be supplied');
     } else {
         var query = new Parse.Query('Notification');
         query.equalTo('id', notificationId);
-        query.get({ useMasterKey: true }).then(function(notification) {
+        query.get({ sessionToken: token }).then(function(notification) {
           console.log('notification received');
           console.dir(notification);
             if (notification.get('read') === true) {
                 return Parse.Promise.error("Notification already marked as read");
             }
             notification.set('read', true);
-            return notification.save(null, { useMasterKey: true });
+            return notification.save(null, { sessionToken: token });
         }).then(function(user) {
             response.success(user);
         }, function(error) {
