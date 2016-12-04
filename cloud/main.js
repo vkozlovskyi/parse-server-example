@@ -522,6 +522,7 @@ Parse.Cloud.beforeSave("Conversation", function(request, response) {
 
 Parse.Cloud.define("auth_linkedin", function(request, response) {
     // Parse.Cloud.useMasterKey();
+    console.log('Function launched');
     var fields = [
         'id',
         'first-name',
