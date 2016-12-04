@@ -701,7 +701,9 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
             return Parse.Promise.when(user.save(null, { useMasterKey: true }), responseObj);
         }).then(function(user, responseObj) {
             responseObj.parseToken = user.getSessionToken();
-            console.log('success user:' + user);
+            console.log('success user:' + user.getSessionToken());
+            console.log('responseObj:' + responseObj);
+            console.log('responseObj1:' + JSON.stringify(responseObj));
 
             response.success(responseObj);
         }, function(errors) {
