@@ -192,7 +192,7 @@ Parse.Cloud.define("like", function(request, response) {
     } else {
         var query = new Parse.Query('Activity');
         query.include('owner');
-        query.get(activityId, { useMasterKey: true }).then(function(activity) {
+        query.get(activityId).then(function(activity) {
             var userId = request.user.id;
             activity.addUnique('likerIds', userId);
             return activity.save({ useMasterKey: true });
@@ -219,7 +219,7 @@ Parse.Cloud.define("unlike", function(request, response) {
     } else {
         var query = new Parse.Query('Activity');
         query.include('owner');
-        query.get(activityId { useMasterKey: true }).then(function(activity) {
+        query.get(activityId).then(function(activity) {
             var userId = request.user.id;
             activity.remove('likerIds', userId);
             return activity.save({ useMasterKey: true });
