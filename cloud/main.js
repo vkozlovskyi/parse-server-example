@@ -643,26 +643,26 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
                 'Content-Type': 'application/json',
                 'x-li-format': 'json'
         }}));
-        promises.push(Parse.Cloud.httpRequest({
-            url: 'https://api.linkedin.com/v1/people/~:(picture-url)',
-            params: {
-                'oauth2_access_token' : token
-            },
-            headers:{
-                'Content-Type': 'application/json',
-                'x-li-format': 'json'
-        }}));
-        Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
+        // promises.push(Parse.Cloud.httpRequest({
+        //     url: 'https://api.linkedin.com/v1/people/~:(picture-url)',
+        //     params: {
+        //         'oauth2_access_token' : token
+        //     },
+        //     headers:{
+        //         'Content-Type': 'application/json',
+        //         'x-li-format': 'json'
+        // }}));
+        Parse.Promise.when(promises).then(function(profileReponse) {
             profile = profileReponse[0]['data'];
 
             console.log('profile:' + profile);
 
             console.log('avatar:' + avatarReponse);
-
-            profile.largePictureUrl = '';
-            if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
-                profile.largePictureUrl = avatarReponse.data.values[0];
-            }
+            //
+            // profile.largePictureUrl = '';
+            // if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
+            //     profile.largePictureUrl = avatarReponse.data.values[0];
+            // }
             console.log('prof:' + profile);
             return Parse.Promise.as(profile);
         }).then(function(profile) {
