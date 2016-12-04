@@ -22,12 +22,9 @@ Parse.Cloud.define("unread_counts", function(request, response) {
     promises.push(query.count({ sessionToken: token }));
 
     var promise = Parse.Promise.when(promises);
-    promise.then(function(messages, notificationCount) {
-
-      console.log('count updated');
-      console.dir(messages);
-      console.dir(notificationCount);
-
+    promise.then(function(result) {
+        var messages = result[0];
+        var notificationCount = result[1];
         var responseObj = {};
         responseObj['messages'] = messages.length || 0;
         responseObj['notifications'] = notificationCount;
