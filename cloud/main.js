@@ -14,12 +14,12 @@ Parse.Cloud.define("unread_counts", function(request, response) {
 
     query = new Parse.Query('Message');
     query.equalTo('unreadUserIds', currentUser.id);
-    promises.push(query.find({ sessionToken: token, useMasterKey: true }));
+    promises.push(query.find({ useMasterKey: true }));
 
     query = new Parse.Query('Notification');
     query.equalTo('owner', currentUser);
     query.equalTo('read', false);
-    promises.push(query.count({ sessionToken: token, useMasterKey: true }));
+    promises.push(query.count({ useMasterKey: true }));
 
     var promise = Parse.Promise.when(promises);
     promise.then(function(messages, notificationCount) {
@@ -763,9 +763,6 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 	    		var argument = arguments[i];
 	        	meetups.push(argument);
 	  		}
-
-        console.log('Meetups updated');
-        console.dir(meetups);
 
 	    	response.success({
 		    	meetups: meetups
