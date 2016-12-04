@@ -201,13 +201,13 @@ Parse.Cloud.define("like", function(request, response) {
             return activity.save(null, { useMasterKey: true });
         }).then(function(activity) {
           console.log('Save successful');
-        //     var owner = activity.get('owner');
-        //     var text = activity.get('activity');
-        //     var data = {
-        //         'activityId': activity.id
-        //     };
-        //     return handleNotifications('like', text, data, [owner], false, currentUser);
-        // }).then(function() {
+            var owner = activity.get('owner');
+            var text = activity.get('activity');
+            var data = {
+                'activityId': activity.id
+            };
+            return handleNotifications('like', text, data, [owner], false, currentUser);
+        }).then(function() {
             response.success();
         }, function(error) {
             response.error('Error liking activity: ' + JSON.stringify(error));
@@ -216,7 +216,6 @@ Parse.Cloud.define("like", function(request, response) {
 });
 
 Parse.Cloud.define("unlike", function(request, response) {
-    // Parse.Cloud.useMasterKey();
     var activityId = request.params.activityId;
     var currentUser = request.user;
     if (!activityId) {
@@ -229,7 +228,7 @@ Parse.Cloud.define("unlike", function(request, response) {
             var userId = currentUser.id;
             activity.remove('likerIds', userId);
             return activity.save(null, { useMasterKey: true });
-        }).then(function(activity) {
+        }).then(function() {
             response.success();
         }, function(error) {
             response.error('Error liking activity: ' + JSON.stringify(error));
@@ -379,7 +378,7 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
 
 function handleNotifications(type, text, data, recipients, pushOnly, currentUser) {
     if (pushOnly === true) {
-        return handlePush(type, text, data, recipients, []);
+        return handlePush(type, text, data, recipients, [], currentUser);
     } else {
         var sender = currentUser;
         var promises = _.map(recipients, function(owner) {
@@ -393,7 +392,7 @@ function handleNotifications(type, text, data, recipients, pushOnly, currentUser
             notification.set('text', text);
             notification.set('data', data);
             notification.set('read', false);
-            return notification.save();
+            return notification.save(null, { useMasterKey: true });
         });
         return Parse.Promise.when(promises).then(function(notifications) {
             return handlePush(type, text, data, recipients, notifications, currentUser);
