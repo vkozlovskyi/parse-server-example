@@ -427,62 +427,63 @@ Parse.Cloud.beforeSave("Conversation", function(request, response) {
 //     });
 //     return Parse.Promise.when(promises);
 // }
-//
-// Parse.Cloud.define("activities", function(request, response) {
-//     var location = request.params.location;
-//     if (!location) {
-//         response.error('Field location must be supplied');
-//     } else {
-//         var currentUser = Parse.User.current();
-//         var maxResults = 50;
-//         var proximityInMiles = 200;
-//         var promises = [];
-//         var query;
-//
-//         query = new Parse.Query('Activity');
-//         query.notEqualTo('deleted', true);
-//         query.withinMiles('location', location, proximityInMiles);
-//         query.notEqualTo('owner', currentUser);
-//         query.greaterThanOrEqualTo('endDate', new Date());
-//         query.ascending("startDate");
-//         query.include('owner');
-//         promises.push(query.find());
-//
-//         query = new Parse.Query(Parse.User);
-//         query.withinMiles('homeLocation', location, proximityInMiles);
-//         query.notEqualTo('objectId', currentUser.id);
-//         promises.push(query.find());
-//
-//         var promise = Parse.Promise.when(promises);
-//         promise.then(function(activities, users) {
-//             activities = activities || [];
-//             activities = activities.slice(0, maxResults);
-//             var activityCount = activities.length;
-//
-//             var maxUsers = Math.max(50 - activityCount, 0);
-//             var onlineWindowMaxSeconds = 3600 * 4; /* 4 hours */
-//
-//             var now = new Date().getTime() / 1000;
-//             var onlineUsers = _.filter(users, function(user) {
-//                 var lastOnline = user.get('lastOnline').getTime() / 1000;
-//                 return now - lastOnline < onlineWindowMaxSeconds;
-//             });
-//             var offlineUsers = _.difference(users, onlineUsers);
-//             var sortedUsers = onlineUsers.concat(offlineUsers);
-//             var slicedUsers = sortedUsers.slice(0, maxUsers);
-//
-//             var responseObj = {
-//                 'activities': activities,
-//                 'users': slicedUsers
-//             }
-//             response.success(responseObj);
-//         }, function(error) {
-//             console.log('Activities query error: ' + JSON.stringify(error));
-//             response.error('Activities query error');
-//         });
-//     }
-// });
-//
+
+Parse.Cloud.define("activities", function(request, response) {
+    var location = request.params.location;
+    if (!location) {
+        response.error('Field location must be supplied');
+    } else {
+        var currentUser = request.user;
+        var token = currentUser.getSessionToken()
+        var maxResults = 50;
+        var proximityInMiles = 200;
+        var promises = [];
+        var query;
+
+        query = new Parse.Query('Activity');
+        query.notEqualTo('deleted', true);
+        query.withinMiles('location', location, proximityInMiles);
+        query.notEqualTo('owner', currentUser);
+        query.greaterThanOrEqualTo('endDate', new Date());
+        query.ascending("startDate");
+        query.include('owner');
+        promises.push(query.find({ sessionToken: token }));
+
+        query = new Parse.Query(Parse.User);
+        query.withinMiles('homeLocation', location, proximityInMiles);
+        query.notEqualTo('objectId', currentUser.id);
+        promises.push(query.find({ sessionToken: token }));
+
+        var promise = Parse.Promise.when(promises);
+        promise.then(function(activities, users) {
+            activities = activities || [];
+            activities = activities.slice(0, maxResults);
+            var activityCount = activities.length;
+
+            var maxUsers = Math.max(50 - activityCount, 0);
+            var onlineWindowMaxSeconds = 3600 * 4; /* 4 hours */
+
+            var now = new Date().getTime() / 1000;
+            var onlineUsers = _.filter(users, function(user) {
+                var lastOnline = user.get('lastOnline').getTime() / 1000;
+                return now - lastOnline < onlineWindowMaxSeconds;
+            });
+            var offlineUsers = _.difference(users, onlineUsers);
+            var sortedUsers = onlineUsers.concat(offlineUsers);
+            var slicedUsers = sortedUsers.slice(0, maxUsers);
+
+            var responseObj = {
+                'activities': activities,
+                'users': slicedUsers
+            }
+            response.success(responseObj);
+        }, function(error) {
+            console.log('Activities query error: ' + JSON.stringify(error));
+            response.error('Activities query error');
+        });
+    }
+});
+
 // Parse.Cloud.define("linkedin_distance", function(request, response) {
 //     Parse.Cloud.useMasterKey();
 //     var token = request.params.liToken;
@@ -612,156 +613,156 @@ var guid = (function() {
   };
 })();
 
-// Parse.Cloud.define("get_meetup_events", function(request, response) {
-//     Parse.Cloud.useMasterKey();
-//     var location = request.params.location;
-//     var mlsFromEpoch = request.params.dateNumber;
-//     var offset = request.params.offset;
+Parse.Cloud.define("get_meetup_events", function(request, response) {
+    // Parse.Cloud.useMasterKey();
+    var location = request.params.location;
+    var mlsFromEpoch = request.params.dateNumber;
+    var offset = request.params.offset;
+
+    if (!location) {
+        response.error('Field location must be supplied');
+    } else {
+        var lat = location.latitude;
+        var lon = location.longitude;
+		Parse.Cloud.httpRequest({
+            url: 'https://api.meetup.com/2/open_events?lat='+lat+'&lon='+lon+'&page=20&offset='+offset+'&time='+mlsFromEpoch+',&fields=trending_rank,group_photos,venue,lat,lon&key=2e26e2b7d4e44642c5b71d46123c21',
+            headers:{
+                'Content-Type': 'application/json'
+        }}).then(function(meetupsResponce) {
+
+	        var responseArray = meetupsResponce['data']['results'];
+	        var results = [];
+
+	    	for (var i = 0; i < responseArray.length; i++) { // process objects only with coordinates and photo
+	    		var element = responseArray[i];
+	    		var venue = element['venue'];
+	    		if (!!venue && !!element.group.photos[0] && !!venue.lat && !!venue.lon) {
+	    			results.push(element);
+	    		}
+	    	}
+
+	        var promises = _.map(results, function(result) {
+
+	        	var id = result['id'];
+	        	var query = new Parse.Query('Meetup');
+	        	query.equalTo('meetupId', id);
+
+	        	return query.find().then(function(searchResults) {
+
+	        		if (searchResults.length > 0) { // Meetup already exists in database
+
+	        			var meetup = searchResults[0];
+	        			meetup.set('title', result.name);
+	        			meetup.set('desc', result.description);
+	        			meetup.set('distance', result.distance);
+	        			meetup.set('groupTitle', result.group.name);
+	        			meetup.set('eventUrl', result.event_url);
+
+	        			// time
+
+	        			var timeInt = parseInt(result.time);
+	        			var offsetInt = parseInt(result.utc_offset);
+	        			var resultInt = timeInt + offsetInt;
+	        			var time = new Date(resultInt);
+	        			meetup.set('time', time);
+
+	        			// duration
+
+	        			var duration = 10800000; // default is 3 hours
+	        			if (!!result.duration) {
+		        			duration = result.duration;
+	        			}
+	        			meetup.set('duration', duration);
+
+	        			// photo
+
+	        			if (!!result.group.photos[0]) {
+			        		var photoUrl = result.group.photos[0].photo_link;
+	        				meetup.set('photoUrl', photoUrl);
+	        			}
+
+	        			// location
+
+//	        			var venue = result['venue'];
 //
-//     if (!location) {
-//         response.error('Field location must be supplied');
-//     } else {
-//         var lat = location.latitude;
-//         var lon = location.longitude;
-// 		Parse.Cloud.httpRequest({
-//             url: 'https://api.meetup.com/2/open_events?lat='+lat+'&lon='+lon+'&page=20&offset='+offset+'&time='+mlsFromEpoch+',&fields=trending_rank,group_photos,venue,lat,lon&key=2e26e2b7d4e44642c5b71d46123c21',
-//             headers:{
-//                 'Content-Type': 'application/json'
-//         }}).then(function(meetupsResponce) {
-//
-// 	        var responseArray = meetupsResponce['data']['results'];
-// 	        var results = [];
-//
-// 	    	for (var i = 0; i < responseArray.length; i++) { // process objects only with coordinates and photo
-// 	    		var element = responseArray[i];
-// 	    		var venue = element['venue'];
-// 	    		if (!!venue && !!element.group.photos[0] && !!venue.lat && !!venue.lon) {
-// 	    			results.push(element);
-// 	    		}
-// 	    	}
-//
-// 	        var promises = _.map(results, function(result) {
-//
-// 	        	var id = result['id'];
-// 	        	var query = new Parse.Query('Meetup');
-// 	        	query.equalTo('meetupId', id);
-//
-// 	        	return query.find().then(function(searchResults) {
-//
-// 	        		if (searchResults.length > 0) { // Meetup already exists in database
-//
-// 	        			var meetup = searchResults[0];
-// 	        			meetup.set('title', result.name);
-// 	        			meetup.set('desc', result.description);
-// 	        			meetup.set('distance', result.distance);
-// 	        			meetup.set('groupTitle', result.group.name);
-// 	        			meetup.set('eventUrl', result.event_url);
-//
-// 	        			// time
-//
-// 	        			var timeInt = parseInt(result.time);
-// 	        			var offsetInt = parseInt(result.utc_offset);
-// 	        			var resultInt = timeInt + offsetInt;
-// 	        			var time = new Date(resultInt);
-// 	        			meetup.set('time', time);
-//
-// 	        			// duration
-//
-// 	        			var duration = 10800000; // default is 3 hours
-// 	        			if (!!result.duration) {
-// 		        			duration = result.duration;
-// 	        			}
-// 	        			meetup.set('duration', duration);
-//
-// 	        			// photo
-//
-// 	        			if (!!result.group.photos[0]) {
-// 			        		var photoUrl = result.group.photos[0].photo_link;
-// 	        				meetup.set('photoUrl', photoUrl);
-// 	        			}
-//
-// 	        			// location
-//
-// //	        			var venue = result['venue'];
-// //
-// //	        			if (!!venue) {
-// //		        			meetup.set('venue', venue.name);
-// //	        				var address = venue.address_1;
-// //	        				var city = venue.city;
-// //	        				if (!!address && !!city) {
-// //		        				meetup.set('address', address + ' , ' + city);
-// //	        				}
-// //	        			}
-//
-// 	        		} else { // Create new Meetup
-//
-// 	        			var meetup = new Parse.Object("Meetup");
-// 	        			meetup.set('meetupId', id);
-// 	        			meetup.set('title', result.name);
-// 	        			meetup.set('desc', result.description);
-// 	        			meetup.set('distance', result.distance);
-// 	        			meetup.set('groupTitle', result.group.name);
-// 	        			meetup.set('eventUrl', result.event_url);
-//
-// 	        			// time
-//
-// 	        			var timeInt = parseInt(result.time);
-// 	        			var offsetInt = parseInt(result.utc_offset);
-// 	        			var resultInt = timeInt + offsetInt;
-// 	        			var time = new Date(resultInt);
-// 	        			meetup.set('time', time);
-//
-// 	        			// duration
-//
-// 	        			var duration = 10800000; // default is 3 hours
-// 	        			if (!!result.duration) {
-// 	        				duration = result.duration;
-// 	        			}
-// 	        			meetup.set('duration', duration);
-//
-// 	        			// photo
-//
-// 	        			if (!!result.group.photos[0]) {
-// 							var photoUrl = result.group.photos[0].photo_link;
-//         					if (!!photoUrl) {
-//         						meetup.set('photoUrl', photoUrl);
-//         					}
-// 	        			}
-//
-// 	        			// location
-//
-// 	        			var venue = result['venue'];
-// 	        			var point = new Parse.GeoPoint({latitude: venue.lat, longitude: venue.lon});
-// 	        			meetup.set('location', point);
-// 	        			meetup.set('venue', venue.name);
-// 	        			var address = result.venue.address_1;
-// 	        			var city = result.venue.city;
-// 	        			if (!!address && !!city) {
-// 		        			meetup.set('address', address + ' , ' + city);
-// 	        			}
-// 	        		}
-//
-// 	        		return meetup.save();
-//
-// 				}, function (error) {
-// 		    		response.error("meetup fetch failed with error.code: " + error.code + " error.message: " + error.message);
-// 	    		});
-// 			});
-//
-// 		return Parse.Promise.when(promises).then(function() {
-//
-// 			var meetups = [];
-// 	    	for (var i = 0; i < arguments.length; i++) {
-// 	    		var argument = arguments[i];
-// 	        	meetups.push(argument);
-// 	  		}
-//
-// 	    	response.success({
-// 		    	meetups: meetups
-// 	  		});
-// 		});
-//     	}, function(error) {
-//         	response.error(error);
-//     	});
-//     }
-// });
+//	        			if (!!venue) {
+//		        			meetup.set('venue', venue.name);
+//	        				var address = venue.address_1;
+//	        				var city = venue.city;
+//	        				if (!!address && !!city) {
+//		        				meetup.set('address', address + ' , ' + city);
+//	        				}
+//	        			}
+
+	        		} else { // Create new Meetup
+
+	        			var meetup = new Parse.Object("Meetup");
+	        			meetup.set('meetupId', id);
+	        			meetup.set('title', result.name);
+	        			meetup.set('desc', result.description);
+	        			meetup.set('distance', result.distance);
+	        			meetup.set('groupTitle', result.group.name);
+	        			meetup.set('eventUrl', result.event_url);
+
+	        			// time
+
+	        			var timeInt = parseInt(result.time);
+	        			var offsetInt = parseInt(result.utc_offset);
+	        			var resultInt = timeInt + offsetInt;
+	        			var time = new Date(resultInt);
+	        			meetup.set('time', time);
+
+	        			// duration
+
+	        			var duration = 10800000; // default is 3 hours
+	        			if (!!result.duration) {
+	        				duration = result.duration;
+	        			}
+	        			meetup.set('duration', duration);
+
+	        			// photo
+
+	        			if (!!result.group.photos[0]) {
+							var photoUrl = result.group.photos[0].photo_link;
+        					if (!!photoUrl) {
+        						meetup.set('photoUrl', photoUrl);
+        					}
+	        			}
+
+	        			// location
+
+	        			var venue = result['venue'];
+	        			var point = new Parse.GeoPoint({latitude: venue.lat, longitude: venue.lon});
+	        			meetup.set('location', point);
+	        			meetup.set('venue', venue.name);
+	        			var address = result.venue.address_1;
+	        			var city = result.venue.city;
+	        			if (!!address && !!city) {
+		        			meetup.set('address', address + ' , ' + city);
+	        			}
+	        		}
+
+	        		return meetup.save();
+
+				}, function (error) {
+		    		response.error("meetup fetch failed with error.code: " + error.code + " error.message: " + error.message);
+	    		});
+			});
+
+		return Parse.Promise.when(promises).then(function() {
+
+			var meetups = [];
+	    	for (var i = 0; i < arguments.length; i++) {
+	    		var argument = arguments[i];
+	        	meetups.push(argument);
+	  		}
+
+	    	response.success({
+		    	meetups: meetups
+	  		});
+		});
+    	}, function(error) {
+        	response.error(error);
+    	});
+    }
+});
