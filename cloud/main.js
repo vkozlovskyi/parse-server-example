@@ -274,103 +274,102 @@ Parse.Cloud.define("meetup_unlike", function(request, response) {
     }
 });
 
-// function updateActivityCommenters(comment) {
-//     var activity = comment.get('activity');
-//     return activity.fetch().then(function(activity) {
-//         var query = new Parse.Query('Comment');
-//         query.equalTo('activity', activity);
-//         query.include('owner');
-//         return Parse.Promise.when(query.find(), activity);
-//     }).then(function(comments, activity) {
-//         var ids = [];
-//         for (var i=0; i<comments.length; ++i) {
-//             ids.push(comments[i].get('owner').id);
-//         }
-//         activity.set('commenterIds', ids);
-//         return activity.save();
-//     });
-// }
-//
-// function updateMeetupCommenters(comment) {
-//     var meetup = comment.get('meetup');
-//     return meetup.fetch().then(function(meetup) {
-//         var query = new Parse.Query('Comment');
-//         query.equalTo('meetup', meetup);
-//         return Parse.Promise.when(query.find(), meetup);
-//     }).then(function(comments, meetup) {
-//         var ids = [];
-//         for (var i=0; i<comments.length; ++i) {
-//             ids.push(comments[i].get('owner').id);
-//         }
-//         meetup.set('commenterIds', ids);
-//         return meetup.save();
-//     });
-// }
-//
-// Parse.Cloud.afterSave("Comment", function(request) {
-//     Parse.Cloud.useMasterKey();
-//     var comment = request.object;
-//     if (comment.existed() === true) {
-//         // Ignore
-//     } else {
-//
-//     var meetup = comment.get('meetup');
-// 	console.log('Meetup value:' + meetup);
-//
-// 	if (meetup === undefined) {
-//
-// 		var promise = updateActivityCommenters(comment);
-// 		promise.then(function(activity) {
-// 		    var owner = activity.get('owner');
-// 		    var text = comment.get('text');
-// 		    var data = {
-// 		        'commentId': comment.id,
-// 		        'activityId': activity.id
-// 		    };
-// 		    return handleNotifications('comment', text, data, [owner], false);
-// 		}).then(function() {
-// 			// All ok
-// 		}, function(error) {
-// 			console.log('Process comment error: ' + JSON.stringify(error));
-// 		});
-//
-// 	} else {
-// 		var promise = updateMeetupCommenters(comment);
-// 		promise.then(function() {
-// 		    // All ok
-// 		}, function(error) {
-// 		    console.log('Process comment error: ' + JSON.stringify(error));
-// 		});
-// 	}
-//
-//     // return meetup.fetch().then(function(meetup) {
-//     //
-//     //
-//     //
-//     //
-//     // });
-//
-// //    if (comment.meetup === undefined) {
-// //
-// //
-// //    } else {
-// //    	var promise = updateMeetupCommenters(comment);
-// //		promise.then(function() {
-// //    	    // All ok
-// //    	}, function(error) {
-// //    	    console.log('Process comment error: ' + JSON.stringify(error));
-// //    	});
-// //    }
-// //
+function updateActivityCommenters(comment) {
+    var activity = comment.get('activity');
+    return activity.fetch({ useMasterKey: true }).then(function(activity) {
+        var query = new Parse.Query('Comment');
+        query.equalTo('activity', activity);
+        query.include('owner');
+        return Parse.Promise.when(query.find({ useMasterKey: true }), activity);
+    }).then(function(comments, activity) {
+        var ids = [];
+        for (var i=0; i<comments.length; ++i) {
+            ids.push(comments[i].get('owner').id);
+        }
+        activity.set('commenterIds', ids);
+        return activity.save(null, { useMasterKey: true });
+    });
+}
+
+function updateMeetupCommenters(comment) {
+    var meetup = comment.get('meetup');
+    return meetup.fetch({ useMasterKey: true }).then(function(meetup) {
+        var query = new Parse.Query('Comment');
+        query.equalTo('meetup', meetup);
+        return Parse.Promise.when(query.find({ useMasterKey: true }), meetup);
+    }).then(function(comments, meetup) {
+        var ids = [];
+        for (var i=0; i<comments.length; ++i) {
+            ids.push(comments[i].get('owner').id);
+        }
+        meetup.set('commenterIds', ids);
+        return meetup.save(null, { useMasterKey: true });
+    });
+}
+
+Parse.Cloud.afterSave("Comment", function(request) {
+    // Parse.Cloud.useMasterKey();
+    var comment = request.object;
+    if (comment.existed() === true) {
+        // Ignore
+    } else {
+
+    var meetup = comment.get('meetup');
+	console.log('Meetup value:' + meetup);
+
+	if (meetup === undefined) {
+
+		var promise = updateActivityCommenters(comment);
+		promise.then(function(activity) {
+		    var owner = activity.get('owner');
+		    var text = comment.get('text');
+		    var data = {
+		        'commentId': comment.id,
+		        'activityId': activity.id
+		    };
+		    return handleNotifications('comment', text, data, [owner], false, request.user);
+		}).then(function() {
+			// All ok
+		}, function(error) {
+			console.log('Process comment error: ' + JSON.stringify(error));
+		});
+
+	} else {
+		var promise = updateMeetupCommenters(comment);
+		promise.then(function() {
+		    // All ok
+		}, function(error) {
+		    console.log('Process comment error: ' + JSON.stringify(error));
+		});
+	}
+
+    // return meetup.fetch().then(function(meetup) {
+    //
+    //
+    //
+    //
+    // });
+
+//    if (comment.meetup === undefined) {
 //
 //
+//    } else {
+//    	var promise = updateMeetupCommenters(comment);
+//		promise.then(function() {
+//    	    // All ok
+//    	}, function(error) {
+//    	    console.log('Process comment error: ' + JSON.stringify(error));
+//    	});
+//    }
 //
-//
-//     }
-// });
+
+
+
+
+    }
+});
 
 function handleNotifications(type, text, data, recipients, pushOnly, currentUser) {
-  console.log('Handle Notification method');
     if (pushOnly === true) {
         return handlePush(type, text, data, recipients, [], currentUser);
     } else {
@@ -386,12 +385,9 @@ function handleNotifications(type, text, data, recipients, pushOnly, currentUser
             notification.set('text', text);
             notification.set('data', data);
             notification.set('read', false);
-            console.log('Notification created, saving');
             return notification.save(null, { useMasterKey: true });
         });
         return Parse.Promise.when(promises).then(function(notifications) {
-          console.log('Handle Push method');
-
             return handlePush(type, text, data, recipients, notifications, currentUser);
         });
     }
@@ -483,8 +479,6 @@ Parse.Cloud.define("activities", function(request, response) {
                 'activities': activities,
                 'users': slicedUsers
             }
-            console.log('Final response');
-              console.dir(responseObj);
 
             response.success(responseObj);
         }, function(error) {
