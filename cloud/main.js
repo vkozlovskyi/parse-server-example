@@ -653,8 +653,13 @@ Parse.Cloud.define("auth_linkedin", function(request, response) {
                 'x-li-format': 'json'
         }}));
         Parse.Promise.when(promises).then(function(profileReponse, avatarReponse) {
-            var profile = JSON.stringify(profileReponse).data;
+            var status = JSON.stringify(profileReponse)['status'];
+            var profile = JSON.stringify(profileReponse)['data'];
+            var status2 = JSON.stringify(profileReponse)[0]['status'];
+
             console.log('profile:' + profile);
+            console.log('status:' + status);
+            console.log('status2:' + status2);
 
             profile.largePictureUrl = '';
             if (avatarReponse.data.values && avatarReponse.data.values.length > 0) {
