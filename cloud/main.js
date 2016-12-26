@@ -632,7 +632,8 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 		Parse.Cloud.httpRequest({
             url: 'https://api.meetup.com/2/open_events?lat='+lat+'&lon='+lon+'&page=20&offset='+offset+'&time='+mlsFromEpoch+',&fields=trending_rank,group_photos,venue,lat,lon&key=2e26e2b7d4e44642c5b71d46123c21',
             headers:{
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Meta-Photo-Host': 'secure'
         }}).then(function(meetupsResponce) {
 
 	        var responseArray = meetupsResponce['data']['results'];
