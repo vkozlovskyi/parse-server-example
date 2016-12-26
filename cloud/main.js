@@ -637,6 +637,7 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
         }}).then(function(meetupsResponce) {
 
 	        var responseArray = meetupsResponce['data']['results'];
+          console.log('Group result: ' + JSON.stringify(responseArray[0]['group']));
 	        var results = [];
 
 	    	for (var i = 0; i < responseArray.length; i++) { // process objects only with coordinates and photo
@@ -683,7 +684,6 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 	        			// photo
 
 	        			if (!!result.group.photos[0]) {
-                  console.log('photos: ' + JSON.stringify(result.group.photos[0]));
 			        		var photoUrl = result.group.photos[0].photo_link;
 	        				meetup.set('photoUrl', photoUrl);
 	        			}
@@ -731,7 +731,6 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 
 	        			if (!!result.group.photos[0]) {
 							var photoUrl = result.group.photos[0].photo_link;
-              console.log('photos: ' + JSON.stringify(result.group.photos[0]));
         					if (!!photoUrl) {
         						meetup.set('photoUrl', photoUrl);
         					}
