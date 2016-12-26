@@ -731,6 +731,7 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
 
 	        			if (!!result.group.photos[0]) {
 							var photoUrl = result.group.photos[0].photo_link;
+              console.log('photos: ' + JSON.stringify(result.group.photos[0]));
         					if (!!photoUrl) {
         						meetup.set('photoUrl', photoUrl);
         					}
