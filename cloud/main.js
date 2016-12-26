@@ -637,7 +637,7 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
         }}).then(function(meetupsResponce) {
 
 	        var responseArray = meetupsResponce['data']['results'];
-          console.log('response: ' + JSON.stringify(responseArray));
+          console.dir('response: ' + JSON.stringify(responseArray));
 
 	        var results = [];
 
