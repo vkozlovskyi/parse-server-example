@@ -637,6 +637,8 @@ Parse.Cloud.define("get_meetup_events", function(request, response) {
         }}).then(function(meetupsResponce) {
 
 	        var responseArray = meetupsResponce['data']['results'];
+          console.log('response: ' + JSON.stringify(responseArray));
+
 	        var results = [];
 
 	    	for (var i = 0; i < responseArray.length; i++) { // process objects only with coordinates and photo
