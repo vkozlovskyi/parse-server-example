@@ -17,18 +17,19 @@ var api = new ParseServer({
   appId: process.env.APP_ID || 'myAppId',
   masterKey: process.env.MASTER_KEY || '', //Add your master key here. Keep it secret!
   push: {
-		android: {
-			senderId: '', // The Sender ID of GCM
-			apiKey: '' // The Server API Key of GCM
-		},
-		ios: {
-			pfx: 'certs/cert.p12', // the path and filename to the .p12 file you exported earlier.
-			cert: '', // If not using the .p12 format, the path to the certificate PEM to load from disk
-			bundleId: '', // The bundle identifier associated with your app
-			key: '', // If not using the .p12 format, the path to the private key PEM to load from disk
-			production: true // Specifies which environment to connect to: Production (if true) or Sandbox
-		}
-	},
+      ios: [
+        {
+          pfx: 'certs/mycert.p12',
+          bundleId: 'com.travelersgrid.TravelersGridApp',
+          production: false // Dev
+        },
+        {
+          pfx: 'certs/mycert.p12',
+          bundleId: 'com.travelersgrid.TravelersGridApp',
+          production: true // Prod
+        }
+      ]
+  },
   serverURL: process.env.SERVER_URL || 'http://localhost:1337/parse',  // Don't forget to change to https if needed
   liveQuery: {
     classNames: ["Posts", "Comments"] // List of classes to support for query subscriptions
